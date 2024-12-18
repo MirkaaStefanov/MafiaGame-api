@@ -136,6 +136,16 @@
 			<artifactId>poi-ooxml</artifactId>
 			<version>5.2.3</version>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-websocket</artifactId>
+			<version>5.3.29</version> <!-- Use a compatible version for your Spring setup -->
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-messaging</artifactId>
+			<version>5.3.29</version>
+		</dependency>
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>
