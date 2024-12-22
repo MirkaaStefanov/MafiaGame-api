@@ -27,7 +27,7 @@ public class GameService {
     private final ModelMapper modelMapper;
     private final MafiaPlayerRepository mafiaPlayerRepository;
     private final GameRepository gameRepository;
-    private final SimpMessagingTemplate messagingTemplate;
+//    private final SimpMessagingTemplate messagingTemplate;
 
     public GameDTO createGame(){
         UserDTO authenticatedUser = userService.findAuthenticatedUser();
@@ -92,7 +92,7 @@ public class GameService {
         }
         mafiaPlayerRepository.saveAll(mafiaPlayers);
         for (MafiaPlayer mafiaPlayer : mafiaPlayers) {
-            messagingTemplate.convertAndSend("/topic/redirect/" + mafiaPlayer.getUser().getId(), "/mafiaPlayer/role");
+//            messagingTemplate.convertAndSend("/topic/redirect/" + mafiaPlayer.getUser().getId(), "/mafiaPlayer/role");
         }
     }
 
