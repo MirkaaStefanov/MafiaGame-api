@@ -137,14 +137,13 @@
 			<version>5.2.3</version>
 		</dependency>
 		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-websocket</artifactId>
-			<version>5.3.29</version> <!-- Use a compatible version for your Spring setup -->
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-websocket</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-messaging</artifactId>
-			<version>5.3.29</version>
+			<groupId>jakarta.websocket</groupId>
+			<artifactId>jakarta.websocket-api</artifactId>
+			<version>2.1.0</version> <!-- Latest Jakarta WebSocket API -->
 		</dependency>
 	</dependencies>
 	<dependencyManagement>
