@@ -47,7 +47,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests()
 
                 .requestMatchers("/game/**").authenticated()
-
+                .requestMatchers("/mafiaPlayer/**").authenticated()
 
                 .anyRequest()
                 .permitAll()
