@@ -33,4 +33,7 @@ public class Vote {
     @JoinColumn(name = "voted_id")
     private MafiaPlayer voted;
 
+    @ManyToOne
+    @JoinColumn(name = "game_id")
+    private Game game;
 }

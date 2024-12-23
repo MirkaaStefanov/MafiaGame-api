@@ -31,6 +31,9 @@ public class MafiaPlayer {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    private String name;
+
     @Enumerated(EnumType.STRING)
     private PlayerRole role;
 

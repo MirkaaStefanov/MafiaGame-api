@@ -92,7 +92,9 @@ public class GameService {
         }
         mafiaPlayerRepository.saveAll(mafiaPlayers);
         for (MafiaPlayer mafiaPlayer : mafiaPlayers) {
-            messagingTemplate.convertAndSend("/topic/redirect/" + mafiaPlayer.getUser().getId(), "/mafiaPlayer/role");
+            if(mafiaPlayer.getRole() != PlayerRole.NARRATOR){
+                messagingTemplate.convertAndSend("/topic/redirect/" + mafiaPlayer.getUser().getId(), "/mafiaPlayer/role");
+            }
         }
     }
 
