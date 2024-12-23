@@ -46,7 +46,7 @@ public class SecurityConfiguration {
                 .and()
                 .authorizeHttpRequests()
 
-                .requestMatchers("/game/**").authenticated()
+                .requestMatchers(HttpMethod.POST,"/game/**").authenticated()
                 .requestMatchers("/mafiaPlayer/**").authenticated()
 
                 .anyRequest()

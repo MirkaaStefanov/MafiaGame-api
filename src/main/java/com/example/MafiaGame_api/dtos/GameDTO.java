@@ -1,5 +1,6 @@
 package com.example.MafiaGame_api.dtos;
 
+import com.example.MafiaGame_api.models.MafiaPlayer;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,6 +13,6 @@ import java.util.List;
 public class GameDTO {
 
     private Long id;
-    private List<Long> players;
+    private List<MafiaPlayerDTO> players;
     private boolean active;
 }

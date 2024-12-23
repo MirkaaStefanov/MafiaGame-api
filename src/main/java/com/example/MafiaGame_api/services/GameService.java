@@ -1,6 +1,7 @@
 package com.example.MafiaGame_api.services;
 
 import com.example.MafiaGame_api.dtos.GameDTO;
+import com.example.MafiaGame_api.dtos.MafiaPlayerDTO;
 import com.example.MafiaGame_api.dtos.UserDTO;
 import com.example.MafiaGame_api.enums.PlayerRole;
 import com.example.MafiaGame_api.models.Game;
@@ -15,6 +16,7 @@ import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -29,30 +31,45 @@ public class GameService {
     private final GameRepository gameRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
-    public GameDTO createGame(){
+    public GameDTO createGame() {
         UserDTO authenticatedUser = userService.findAuthenticatedUser();
         User user = modelMapper.map(authenticatedUser, User.class);
 
         MafiaPlayer mafiaPlayer = new MafiaPlayer();
         mafiaPlayer.setUser(user);
         mafiaPlayer.setRole(PlayerRole.NARRATOR);
+        mafiaPlayerRepository.save(mafiaPlayer);
+
+        List<MafiaPlayer> players = new ArrayList<>();
+        players.add(mafiaPlayer);
+
 
         Game game = new Game();
-        game.getPlayers().add(mafiaPlayer);
+        game.setPlayers(players);
+        game.setActive(true);
+        gameRepository.save(game);
 
         mafiaPlayer.setGame(game);
 
         mafiaPlayerRepository.save(mafiaPlayer);
-        return modelMapper.map(gameRepository.save(game),GameDTO.class);
+
+        List<MafiaPlayerDTO> mafiaPlayerDTOS = game.getPlayers()
+                .stream()
+                .map(mafiaPlayer1 -> modelMapper.map(mafiaPlayer1, MafiaPlayerDTO.class)) // Map each CartItem to CartItemDTO
+                .toList();
+
+        GameDTO gameDTO = new GameDTO(game.getId(), mafiaPlayerDTOS, game.isActive());
+        return gameDTO;
 
     }
+
     public GameDTO enterGame(Long gameId) throws ChangeSetPersister.NotFoundException {
         UserDTO authenticatedUser = userService.findAuthenticatedUser();
         User user = modelMapper.map(authenticatedUser, User.class);
         Game game = gameRepository.findById(gameId).orElseThrow(ChangeSetPersister.NotFoundException::new);
-        Optional<MafiaPlayer> optionalMafiaPlayer = mafiaPlayerRepository.findByGameAndUser(game,user);
+        Optional<MafiaPlayer> optionalMafiaPlayer = mafiaPlayerRepository.findByGameAndUser(game, user);
 
-        if(optionalMafiaPlayer.isPresent()){
+        if (optionalMafiaPlayer.isPresent()) {
             throw new ValidationException("This user is already in the game!");
         }
 
@@ -63,8 +80,9 @@ public class GameService {
         game.getPlayers().add(mafiaPlayer);
 
         mafiaPlayerRepository.save(mafiaPlayer);
-        return modelMapper.map(gameRepository.save(game),GameDTO.class);
+        return modelMapper.map(gameRepository.save(game), GameDTO.class);
     }
+
     public void startGame(Long gameId, int killerQuantity, int doctorQuantity, int policeQuantity) throws ChangeSetPersister.NotFoundException {
         Game game = gameRepository.findById(gameId).orElseThrow(ChangeSetPersister.NotFoundException::new);
         List<MafiaPlayer> mafiaPlayers = game.getPlayers();
@@ -74,25 +92,27 @@ public class GameService {
         int createdDoctors = 0;
         int createdPolice = 0;
 
-        for(MafiaPlayer mafiaPlayer : mafiaPlayers){
+        for (MafiaPlayer mafiaPlayer : mafiaPlayers) {
 
-            if(mafiaPlayer.getRole() != null){
+            if (mafiaPlayer.getRole() != null) {
                 continue;
             }
-            if(createdKillers<killerQuantity){
+            if (createdKillers < killerQuantity) {
                 mafiaPlayer.setRole(PlayerRole.MAFIA);
                 createdKillers++;
-            }else if(createdDoctors<doctorQuantity){
+            } else if (createdDoctors < doctorQuantity) {
                 mafiaPlayer.setRole(PlayerRole.DOCTOR);
                 createdKillers++;
-            }else if(createdPolice<policeQuantity){
+            } else if (createdPolice < policeQuantity) {
                 mafiaPlayer.setRole(PlayerRole.POLICE);
                 createdPolice++;
+            }else{
+                mafiaPlayer.setRole(PlayerRole.VILLAGER);
             }
         }
         mafiaPlayerRepository.saveAll(mafiaPlayers);
         for (MafiaPlayer mafiaPlayer : mafiaPlayers) {
-            if(mafiaPlayer.getRole() != PlayerRole.NARRATOR){
+            if (mafiaPlayer.getRole() != PlayerRole.NARRATOR) {
                 messagingTemplate.convertAndSend("/topic/redirect/" + mafiaPlayer.getUser().getId(), "/mafiaPlayer/role");
             }
         }
