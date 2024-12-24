@@ -22,10 +22,10 @@ public class MafiaPlayerService {
     private final UserService userService;
     private final ModelMapper modelMapper;
 
-    public MafiaPlayerDTO findMafiaPlayerByUser() throws ChangeSetPersister.NotFoundException {
+    public MafiaPlayerDTO findMafiaPlayerByUser(Long gameId) throws ChangeSetPersister.NotFoundException {
         UserDTO userDTO = userService.findAuthenticatedUser();
         User user = modelMapper.map(userDTO, User.class);
-        Game game = gameRepository.findGameByUserId(userDTO.getId()).orElseThrow(ChangeSetPersister.NotFoundException::new);
+        Game game = gameRepository.findById(gameId).orElseThrow(ChangeSetPersister.NotFoundException::new);
 
         MafiaPlayer mafiaPlayer = mafiaPlayerRepository.findByGameAndUser(game,user).orElseThrow(ChangeSetPersister.NotFoundException::new);
 

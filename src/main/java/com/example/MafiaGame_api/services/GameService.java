@@ -106,17 +106,27 @@ public class GameService {
             } else if (createdPolice < policeQuantity) {
                 mafiaPlayer.setRole(PlayerRole.POLICE);
                 createdPolice++;
-            }else{
+            } else {
                 mafiaPlayer.setRole(PlayerRole.VILLAGER);
             }
         }
         mafiaPlayerRepository.saveAll(mafiaPlayers);
         for (MafiaPlayer mafiaPlayer : mafiaPlayers) {
             if (mafiaPlayer.getRole() != PlayerRole.NARRATOR) {
-                messagingTemplate.convertAndSend("/topic/redirect/" + mafiaPlayer.getUser().getId(), "/mafiaPlayer/role");
+                messagingTemplate.convertAndSend("/topic/redirect/" + mafiaPlayer.getUser().getId(), "/mafiaPlayer/role?gameId=" + game.getId());
             }
         }
     }
 
+    public List<MafiaPlayerDTO> allMafiaPlayersInGame(Long id) throws ChangeSetPersister.NotFoundException {
+        Game game = gameRepository.findById(id).orElseThrow(ChangeSetPersister.NotFoundException::new);
+
+        List<MafiaPlayerDTO> mafiaPlayerDTOS = game.getPlayers()
+                .stream()
+                .map(mafiaPlayer1 -> modelMapper.map(mafiaPlayer1, MafiaPlayerDTO.class)) // Map each CartItem to CartItemDTO
+                .toList();
+
+        return mafiaPlayerDTOS;
+    }
 
 }
