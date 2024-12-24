@@ -76,11 +76,20 @@ public class GameService {
         MafiaPlayer mafiaPlayer = new MafiaPlayer();
         mafiaPlayer.setUser(user);
         mafiaPlayer.setGame(game);
+        mafiaPlayerRepository.save(mafiaPlayer);
 
         game.getPlayers().add(mafiaPlayer);
+        gameRepository.save(game);
 
-        mafiaPlayerRepository.save(mafiaPlayer);
-        return modelMapper.map(gameRepository.save(game), GameDTO.class);
+
+
+        List<MafiaPlayerDTO> mafiaPlayerDTOS = game.getPlayers()
+                .stream()
+                .map(mafiaPlayer1 -> modelMapper.map(mafiaPlayer1, MafiaPlayerDTO.class)) // Map each CartItem to CartItemDTO
+                .toList();
+
+        GameDTO gameDTO = new GameDTO(game.getId(), mafiaPlayerDTOS, game.isActive());
+        return gameDTO;
     }
 
     public void startGame(Long gameId, int killerQuantity, int doctorQuantity, int policeQuantity) throws ChangeSetPersister.NotFoundException {
