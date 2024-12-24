@@ -3,6 +3,7 @@ package com.example.MafiaGame_api.dtos;
 
 
 import com.example.MafiaGame_api.enums.Role;
+import com.example.MafiaGame_api.models.Game;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -28,4 +29,5 @@ public class UserDTO {
     private String email;
     private Role role;
     private Long clientID;
+    private Long gameId;
 }

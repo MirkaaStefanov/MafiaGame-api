@@ -9,6 +9,7 @@ import com.example.MafiaGame_api.models.MafiaPlayer;
 import com.example.MafiaGame_api.models.User;
 import com.example.MafiaGame_api.repositories.GameRepository;
 import com.example.MafiaGame_api.repositories.MafiaPlayerRepository;
+import com.example.MafiaGame_api.repositories.UserRepository;
 import jakarta.validation.ValidationException;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -30,10 +31,16 @@ public class GameService {
     private final MafiaPlayerRepository mafiaPlayerRepository;
     private final GameRepository gameRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final UserRepository userRepository;
 
     public GameDTO createGame() {
         UserDTO authenticatedUser = userService.findAuthenticatedUser();
         User user = modelMapper.map(authenticatedUser, User.class);
+
+        if (user.getGameId() != null) {
+            throw new ValidationException("This user is already in a game!");
+        }
+
 
         MafiaPlayer mafiaPlayer = new MafiaPlayer();
         mafiaPlayer.setUser(user);
@@ -49,13 +56,16 @@ public class GameService {
         game.setActive(true);
         gameRepository.save(game);
 
+        user.setGameId(game.getId());
+        userRepository.save(user);
+
         mafiaPlayer.setGame(game);
 
         mafiaPlayerRepository.save(mafiaPlayer);
 
         List<MafiaPlayerDTO> mafiaPlayerDTOS = game.getPlayers()
                 .stream()
-                .map(mafiaPlayer1 -> modelMapper.map(mafiaPlayer1, MafiaPlayerDTO.class)) // Map each CartItem to CartItemDTO
+                .map(mafiaPlayer1 -> modelMapper.map(mafiaPlayer1, MafiaPlayerDTO.class))
                 .toList();
 
         GameDTO gameDTO = new GameDTO(game.getId(), mafiaPlayerDTOS, game.isActive());
@@ -72,16 +82,23 @@ public class GameService {
         if (optionalMafiaPlayer.isPresent()) {
             throw new ValidationException("This user is already in the game!");
         }
-
+        if (user.getGameId() != null) {
+            throw new ValidationException("This user is already in a game!");
+        }
+        if (game.isActive() == false) {
+            throw new ValidationException("Game is not active");
+        }
         MafiaPlayer mafiaPlayer = new MafiaPlayer();
         mafiaPlayer.setUser(user);
         mafiaPlayer.setGame(game);
         mafiaPlayerRepository.save(mafiaPlayer);
 
+
         game.getPlayers().add(mafiaPlayer);
         gameRepository.save(game);
 
-
+        user.setGameId(game.getId());
+        userRepository.save(user);
 
         List<MafiaPlayerDTO> mafiaPlayerDTOS = game.getPlayers()
                 .stream()
@@ -138,4 +155,29 @@ public class GameService {
         return mafiaPlayerDTOS;
     }
 
+    public void exitGame() throws ChangeSetPersister.NotFoundException {
+        UserDTO authenticatedUser = userService.findAuthenticatedUser();
+        User user = modelMapper.map(authenticatedUser, User.class);
+        Game game = gameRepository.findById(user.getGameId()).orElseThrow(ChangeSetPersister.NotFoundException::new);
+
+        MafiaPlayer mafiaPlayer = mafiaPlayerRepository.findByGameAndUser(game, user).orElseThrow(ChangeSetPersister.NotFoundException::new);
+
+        if (mafiaPlayer.getRole().equals(PlayerRole.NARRATOR)) {
+            if (game.getPlayers().size() == 1) {
+                game.setActive(false);
+            } else {
+                game.getPlayers().remove(mafiaPlayer);
+                game.getPlayers().get(0).setRole(PlayerRole.NARRATOR);
+            }
+        } else {
+            game.getPlayers().remove(mafiaPlayer);
+
+        }
+        user.setGameId(null);
+        mafiaPlayer.setGame(null);
+
+        gameRepository.save(game);
+        userRepository.save(user);
+        mafiaPlayerRepository.save(mafiaPlayer);
+    }
 }

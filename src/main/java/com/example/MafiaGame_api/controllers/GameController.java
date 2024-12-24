@@ -44,4 +44,8 @@ public class GameController {
         return ResponseEntity.ok(gameService.allMafiaPlayersInGame(gameId));
     }
 
+    @PostMapping("/exit")
+    public void exitGame(@RequestHeader("Authorization") String auth) throws ChangeSetPersister.NotFoundException {
+        gameService.exitGame();
+    }
 }
