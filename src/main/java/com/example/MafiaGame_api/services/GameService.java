@@ -2,6 +2,7 @@ package com.example.MafiaGame_api.services;
 
 import com.example.MafiaGame_api.dtos.GameDTO;
 import com.example.MafiaGame_api.dtos.MafiaPlayerDTO;
+import com.example.MafiaGame_api.dtos.ResultDTO;
 import com.example.MafiaGame_api.dtos.UserDTO;
 import com.example.MafiaGame_api.enums.PlayerRole;
 import com.example.MafiaGame_api.models.Game;
@@ -68,7 +69,7 @@ public class GameService {
                 .map(mafiaPlayer1 -> modelMapper.map(mafiaPlayer1, MafiaPlayerDTO.class))
                 .toList();
 
-        GameDTO gameDTO = new GameDTO(game.getId(), mafiaPlayerDTOS, game.isActive());
+        GameDTO gameDTO = new GameDTO(game.getId(), mafiaPlayerDTOS, game.isActive(), game.isPlaying());
         return gameDTO;
 
     }
@@ -85,9 +86,13 @@ public class GameService {
         if (user.getGameId() != null) {
             throw new ValidationException("This user is already in a game!");
         }
-        if (game.isActive() == false) {
-            throw new ValidationException("Game is not active");
+        if (!game.isActive()) {
+            throw new ValidationException("Game is not active!");
         }
+        if (game.isPlaying()) {
+            throw new ValidationException("Game have started!");
+        }
+
         MafiaPlayer mafiaPlayer = new MafiaPlayer();
         mafiaPlayer.setUser(user);
         mafiaPlayer.setGame(game);
@@ -105,7 +110,7 @@ public class GameService {
                 .map(mafiaPlayer1 -> modelMapper.map(mafiaPlayer1, MafiaPlayerDTO.class)) // Map each CartItem to CartItemDTO
                 .toList();
 
-        GameDTO gameDTO = new GameDTO(game.getId(), mafiaPlayerDTOS, game.isActive());
+        GameDTO gameDTO = new GameDTO(game.getId(), mafiaPlayerDTOS, game.isActive(), game.isPlaying());
         return gameDTO;
     }
 
@@ -162,6 +167,10 @@ public class GameService {
 
         MafiaPlayer mafiaPlayer = mafiaPlayerRepository.findByGameAndUser(game, user).orElseThrow(ChangeSetPersister.NotFoundException::new);
 
+        if (game.isPlaying()) {
+            throw new ValidationException("Game have started!");
+        }
+
         if (mafiaPlayer.getRole().equals(PlayerRole.NARRATOR)) {
             if (game.getPlayers().size() == 1) {
                 game.setActive(false);
@@ -180,4 +189,62 @@ public class GameService {
         userRepository.save(user);
         mafiaPlayerRepository.save(mafiaPlayer);
     }
+
+
+    public void kill(Long playerId) throws ChangeSetPersister.NotFoundException {
+        MafiaPlayer mafiaPlayer = mafiaPlayerRepository.findById(playerId).orElseThrow(ChangeSetPersister.NotFoundException::new);
+
+        mafiaPlayer.setKilled(true);
+        mafiaPlayerRepository.save(mafiaPlayer);
+    }
+
+    public void heal(Long playerId) throws ChangeSetPersister.NotFoundException {
+        MafiaPlayer mafiaPlayer = mafiaPlayerRepository.findById(playerId).orElseThrow(ChangeSetPersister.NotFoundException::new);
+
+        mafiaPlayer.setHealed(true);
+        mafiaPlayerRepository.save(mafiaPlayer);
+    }
+
+    public ResultDTO resultInTheMorning() throws ChangeSetPersister.NotFoundException {
+        UserDTO authenticatedUser = userService.findAuthenticatedUser();
+        Game game = gameRepository.findById(authenticatedUser.getGameId()).orElseThrow(ChangeSetPersister.NotFoundException::new);
+
+        MafiaPlayer killed = mafiaPlayerRepository.findByKilledTrueRemovedFalseAndGame_Id(game.getId()).orElseThrow(ChangeSetPersister.NotFoundException::new);
+        MafiaPlayer healed = mafiaPlayerRepository.findByHealedTrueRemovedFalseAndGame_Id(game.getId()).orElseThrow(ChangeSetPersister.NotFoundException::new);
+
+        ResultDTO resultDTO = new ResultDTO();
+        resultDTO.setKilled(null);
+        resultDTO.setGameEnd(false);
+
+        if (killed.equals(healed)) {
+            killed.setKilled(false);
+            healed.setHealed(false);
+        }
+        if (!killed.isHealed()) {
+            killed.setRemoved(true);
+            MafiaPlayerDTO mafiaPlayerDTO = modelMapper.map(killed, MafiaPlayerDTO.class);
+            resultDTO.setKilled(mafiaPlayerDTO);
+            healed.setHealed(false);
+        }
+        mafiaPlayerRepository.save(killed);
+        mafiaPlayerRepository.save(healed);
+
+
+        List<MafiaPlayer> mafiaPlayers = mafiaPlayerRepository.findAllByGameIdAndRemovedFalseAndNotNarrator(game.getId());
+        List<MafiaPlayer> killers = mafiaPlayerRepository.findAllByRoleMafiaRemovedFalseAndGame_Id(game.getId());
+
+        mafiaPlayers.remove(killers);
+
+        if (mafiaPlayers.size() == killers.size()) {
+            resultDTO.setGameEnd(true);
+            resultDTO.setWinners(false);
+        }
+        if (killers.isEmpty()) {
+            resultDTO.setGameEnd(true);
+            resultDTO.setWinners(true);
+        }
+
+        return resultDTO;
+    }
+
 }

@@ -2,6 +2,7 @@ package com.example.MafiaGame_api.controllers;
 
 import com.example.MafiaGame_api.dtos.GameDTO;
 import com.example.MafiaGame_api.dtos.MafiaPlayerDTO;
+import com.example.MafiaGame_api.dtos.ResultDTO;
 import com.example.MafiaGame_api.services.GameService;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -40,12 +41,28 @@ public class GameController {
     }
 
     @GetMapping("/players")
-    public ResponseEntity<List<MafiaPlayerDTO>> allMafiaPlayersInGame(@RequestParam(name = "gameId") Long gameId, @RequestHeader("Authorization") String auth) throws ChangeSetPersister.NotFoundException {
-        return ResponseEntity.ok(gameService.allMafiaPlayersInGame(gameId));
+    public List<MafiaPlayerDTO> allMafiaPlayersInGame(@RequestParam(name = "gameId") Long gameId, @RequestHeader("Authorization") String auth) throws ChangeSetPersister.NotFoundException {
+        return gameService.allMafiaPlayersInGame(gameId);
     }
 
     @PostMapping("/exit")
     public void exitGame(@RequestHeader("Authorization") String auth) throws ChangeSetPersister.NotFoundException {
         gameService.exitGame();
     }
+
+    @PostMapping("/kill")
+    public void kill(@RequestParam Long playerId, @RequestHeader("Authorization") String auth) throws ChangeSetPersister.NotFoundException {
+        gameService.kill(playerId);
+    }
+
+    @PostMapping("/heal")
+    public void heal(@RequestParam Long playerId, @RequestHeader("Authorization") String auth) throws ChangeSetPersister.NotFoundException {
+        gameService.heal(playerId);
+    }
+
+    @GetMapping("/morningResult")
+    public ResponseEntity<ResultDTO> resultInTheMorning(@RequestHeader("Authorization") String auth) throws ChangeSetPersister.NotFoundException {
+        return ResponseEntity.ok(gameService.resultInTheMorning());
+    }
+
 }
