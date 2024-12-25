@@ -17,6 +17,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -49,16 +50,19 @@ public class VoteService {
 
     public List<VoteResultDTO> getVoteResults(Long gameId) throws ChangeSetPersister.NotFoundException {
         Game game = gameRepository.findById(gameId).orElseThrow(ChangeSetPersister.NotFoundException::new);
-        List<VoteResultDTO> voteResults = voteRepository.countVotesByGame(game);
-        int maxVotes = Integer.MIN_VALUE;
+        List<MafiaPlayer> mafiaPlayers = mafiaPlayerRepository.findAllByGameIdAndRemovedFalseAndNotNarrator(gameId);
+        List<VoteResultDTO>voteResults = new ArrayList<>();
         MafiaPlayerDTO mostVotedPlayer = new MafiaPlayerDTO();
+        int maxVotes = Integer.MIN_VALUE;
 
-        for (VoteResultDTO voteResult : voteResults) {
-            if (voteResult.getVoteCount() > maxVotes) {
-                maxVotes = voteResult.getVoteCount();
-                mostVotedPlayer = voteResult.getVotedPlayer();
+        for (MafiaPlayer mafiaPlayer : mafiaPlayers) {
+            int voteForPlayer = voteRepository.countVotesForPlayer(mafiaPlayer, game);
+            MafiaPlayerDTO mafiaPlayerDTO = modelMapper.map(mafiaPlayer, MafiaPlayerDTO.class);
+            if (voteForPlayer > maxVotes) {
+                maxVotes = voteForPlayer;
+                mostVotedPlayer = mafiaPlayerDTO;
             }
-            voteResults.sort((a, b) -> Integer.compare(b.getVoteCount(), a.getVoteCount()));
+            voteResults.add(new VoteResultDTO(mafiaPlayerDTO, voteForPlayer));
         }
         mostVotedPlayer.setRemoved(true);
 

@@ -171,7 +171,7 @@ public class GameService {
             throw new ValidationException("Game have started!");
         }
 
-        if (mafiaPlayer.getRole().equals(PlayerRole.NARRATOR)) {
+        if (mafiaPlayer.getRole() == PlayerRole.NARRATOR) {
             if (game.getPlayers().size() == 1) {
                 game.setActive(false);
             } else {
@@ -209,8 +209,8 @@ public class GameService {
         UserDTO authenticatedUser = userService.findAuthenticatedUser();
         Game game = gameRepository.findById(authenticatedUser.getGameId()).orElseThrow(ChangeSetPersister.NotFoundException::new);
 
-        MafiaPlayer killed = mafiaPlayerRepository.findByKilledTrueRemovedFalseAndGame_Id(game.getId()).orElseThrow(ChangeSetPersister.NotFoundException::new);
-        MafiaPlayer healed = mafiaPlayerRepository.findByHealedTrueRemovedFalseAndGame_Id(game.getId()).orElseThrow(ChangeSetPersister.NotFoundException::new);
+        MafiaPlayer killed = mafiaPlayerRepository.findByKilledTrueAndRemovedFalseAndGame_Id(game.getId()).orElseThrow(ChangeSetPersister.NotFoundException::new);
+        MafiaPlayer healed = mafiaPlayerRepository.findByHealedTrueAndRemovedFalseAndGame_Id(game.getId()).orElseThrow(ChangeSetPersister.NotFoundException::new);
 
         ResultDTO resultDTO = new ResultDTO();
         resultDTO.setKilled(null);
@@ -231,7 +231,7 @@ public class GameService {
 
 
         List<MafiaPlayer> mafiaPlayers = mafiaPlayerRepository.findAllByGameIdAndRemovedFalseAndNotNarrator(game.getId());
-        List<MafiaPlayer> killers = mafiaPlayerRepository.findAllByRoleMafiaRemovedFalseAndGame_Id(game.getId());
+        List<MafiaPlayer> killers = mafiaPlayerRepository.findAllByRoleMafiaAndRemovedFalseAndGame_Id(game.getId());
 
         mafiaPlayers.remove(killers);
 
