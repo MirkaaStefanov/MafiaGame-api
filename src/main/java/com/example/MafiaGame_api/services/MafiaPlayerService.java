@@ -50,7 +50,7 @@ public class MafiaPlayerService {
     public List<MafiaPlayerDTO> allKillers() {
         UserDTO userDTO = userService.findAuthenticatedUser();
 
-        List<MafiaPlayer> mafiaPlayers = mafiaPlayerRepository.findAllByRoleMafiaAndGame_Id(userDTO.getGameId());
+        List<MafiaPlayer> mafiaPlayers = mafiaPlayerRepository.findAllByRoleMafiaRemovedFalseAndGame_Id(userDTO.getGameId());
 
 
         List<MafiaPlayerDTO> mafiaPlayerDTOS = mafiaPlayers
