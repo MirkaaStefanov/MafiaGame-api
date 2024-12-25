@@ -30,7 +30,7 @@ public class VoteService {
         UserDTO authenticatedUserDTO = userService.findAuthenticatedUser();
         User authenticatedUser = modelMapper.map(authenticatedUserDTO, User.class);
         User votedUser = userRepository.findById(id).orElseThrow(ChangeSetPersister.NotFoundException::new);
-        Game game = gameRepository.findGameByUserId(authenticatedUser.getId()).orElseThrow(ChangeSetPersister.NotFoundException::new);
+        Game game = gameRepository.findById(authenticatedUser.getGameId()).orElseThrow(ChangeSetPersister.NotFoundException::new);
 
         MafiaPlayer voterPlayer = mafiaPlayerRepository.findByGameAndUser(game,authenticatedUser).orElseThrow(ChangeSetPersister.NotFoundException::new);
         MafiaPlayer votedPlayer = mafiaPlayerRepository.findByGameAndUser(game,votedUser).orElseThrow(ChangeSetPersister.NotFoundException::new);
