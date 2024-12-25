@@ -13,6 +13,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @AllArgsConstructor
 public class MafiaPlayerService {
@@ -27,9 +29,47 @@ public class MafiaPlayerService {
         User user = modelMapper.map(userDTO, User.class);
         Game game = gameRepository.findById(gameId).orElseThrow(ChangeSetPersister.NotFoundException::new);
 
-        MafiaPlayer mafiaPlayer = mafiaPlayerRepository.findByGameAndUser(game,user).orElseThrow(ChangeSetPersister.NotFoundException::new);
+        MafiaPlayer mafiaPlayer = mafiaPlayerRepository.findByGameAndUser(game, user).orElseThrow(ChangeSetPersister.NotFoundException::new);
 
-        return modelMapper.map(mafiaPlayer,MafiaPlayerDTO.class);
+        return modelMapper.map(mafiaPlayer, MafiaPlayerDTO.class);
+    }
+
+    public List<MafiaPlayerDTO> allMafiaPlayersThatPlay() {
+        UserDTO userDTO = userService.findAuthenticatedUser();
+
+        List<MafiaPlayer> mafiaPlayers = mafiaPlayerRepository.findAllByGameIdAndRemovedFalseAndNotNarrator(userDTO.getGameId());
+
+
+        List<MafiaPlayerDTO> mafiaPlayerDTOS = mafiaPlayers
+                .stream()
+                .map(mafiaPlayer1 -> modelMapper.map(mafiaPlayer1, MafiaPlayerDTO.class))
+                .toList();
+        return mafiaPlayerDTOS;
+    }
+
+    public List<MafiaPlayerDTO> allKillers() {
+        UserDTO userDTO = userService.findAuthenticatedUser();
+
+        List<MafiaPlayer> mafiaPlayers = mafiaPlayerRepository.findAllByRoleMafiaRemovedFalseAndGame_Id(userDTO.getGameId());
+
+
+        List<MafiaPlayerDTO> mafiaPlayerDTOS = mafiaPlayers
+                .stream()
+                .map(mafiaPlayer1 -> modelMapper.map(mafiaPlayer1, MafiaPlayerDTO.class))
+                .toList();
+        return mafiaPlayerDTOS;
+    }
+    public List<MafiaPlayerDTO> allDoctors() {
+        UserDTO userDTO = userService.findAuthenticatedUser();
+
+        List<MafiaPlayer> mafiaPlayers = mafiaPlayerRepository.findAllByRoleDoctorRemovedFalseAndGame_Id(userDTO.getGameId());
+
+
+        List<MafiaPlayerDTO> mafiaPlayerDTOS = mafiaPlayers
+                .stream()
+                .map(mafiaPlayer1 -> modelMapper.map(mafiaPlayer1, MafiaPlayerDTO.class))
+                .toList();
+        return mafiaPlayerDTOS;
     }
 
 }
