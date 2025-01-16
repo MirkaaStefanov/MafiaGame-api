@@ -154,6 +154,7 @@ public class UserService {
         user.setPassword(encodedPassword);
         userRepository.save(user);
         return true;
+
     }
 
     public void deleteUser(Long id) throws ChangeSetPersister.NotFoundException {
