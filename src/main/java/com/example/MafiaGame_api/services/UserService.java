@@ -140,6 +140,7 @@ public class UserService {
         return passwordEncoder.matches(password, authenticatedUserDTO.getPassword());
     }
 
+
     public boolean updatePassword(UserDTO userDTO) {
         UserDTO authenticateUserDTO = findAuthenticatedUser();
         if (!(userDTO.getPassword().equals(userDTO.getRepeatPassword()))) {
